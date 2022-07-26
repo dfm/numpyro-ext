@@ -27,9 +27,6 @@ jobs:
           - os: macos-latest
             python-version: "3.10"
             nox-session: "tests"
-          - os: windows-latest
-            python-version: "3.10"
-            nox-session: "tests"
           - os: ubuntu-latest
             python-version: "3.10"
             nox-session: "lint"
@@ -79,6 +76,6 @@ jobs:
     uses: dfm/workflows/.github/workflows/python-release.yml@main
     with:
       wheels: false
-      enable-windows: true
+      enable-windows: false
     secrets:
       pypi-token: ${{ secrets.pypi_password }}

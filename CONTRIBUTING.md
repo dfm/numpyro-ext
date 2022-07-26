@@ -7,7 +7,7 @@ reports, feature requests, and pull requests.
 Here is a list of important resources for contributors:
 
 - [Source Code](https://github.com/dfm/numpyro-ext)
-- [Documentation](https://numpyro-ext.readthedocs.io)
+- [Documentation](https://github.com/dfm/numpyro-ext)
 - [Issue Tracker](https://github.com/dfm/numpyro-ext/issues)
 
 ## How to report a bug

@@ -7,10 +7,10 @@ code_of_conduct_email: foreman.mackey@gmail.com
 copyright_holder: Simons Foundation, Inc.
 copyright_license: Apache
 copyright_year: '2022'
-documentation_url: https://numpyro-ext.readthedocs.io
+documentation_url: https://github.com/dfm/numpyro-ext
 enable_mypy: false
 enable_pybind11: false
-enable_windows: true
+enable_windows: false
 general_nox_sessions: '"lint"'
 project_description: Some extensions to numpyro that I find useful
 project_development_status: beta

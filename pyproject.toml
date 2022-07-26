@@ -1,9 +1,7 @@
 [project]
 name = "numpyro-ext"
 description = "Some extensions to numpyro that I find useful"
-authors = [
-    { name="Dan Foreman-Mackey", email="foreman.mackey@gmail.com" },
-]
+authors = [{ name = "Dan Foreman-Mackey", email = "foreman.mackey@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.7"
 license = { file = "LICENSE" }
@@ -14,27 +12,19 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
 ]
 dynamic = ["version"]
-dependencies = [
-]
+dependencies = ["numpyro"]
 
 [project.urls]
-"Homepage" = "https://numpyro-ext.readthedocs.io"
+"Homepage" = "https://github.com/dfm/numpyro-ext"
 "Source" = "https://github.com/dfm/numpyro-ext"
 "Bug Tracker" = "https://github.com/dfm/numpyro-ext/issues"
 
 [project.optional-dependencies]
-test = [
-    "pytest",
-]
-docs = [
-]
+test = ["pytest"]
+docs = []
 
 [build-system]
-requires = [
-    "setuptools>=61.0",
-    "wheel",
-    "setuptools_scm",
-]
+requires = ["setuptools>=61.0", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
@@ -56,11 +46,7 @@ known_first_party = ["numpyro_ext"]
 parallel = true
 branch = true
 source = ["numpyro_ext"]
-omit = [
-    "docs/*",
-    "tests/*",
-    "*/numpyro_ext/numpyro_ext_version.py",
-]
+omit = ["docs/*", "tests/*", "*/numpyro_ext/numpyro_ext_version.py"]
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
