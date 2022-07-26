@@ -1,0 +1,12 @@
+/src/*/version.py
+*.pyc
+__pycache__
+*.egg-info
+_skbuild
+*.so
+.mypy_cache
+.tox
+.nox
+.coverage
+.coverage*
+dist

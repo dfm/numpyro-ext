@@ -1,0 +1,28 @@
+_commit: v0.0.5
+_src_path: gh:dfm/copier-python
+author_email: foreman.mackey@gmail.com
+author_fullname: Dan Foreman-Mackey
+author_username: dfm
+code_of_conduct_email: foreman.mackey@gmail.com
+copyright_holder: Simons Foundation, Inc.
+copyright_license: Apache
+copyright_year: '2022'
+documentation_url: https://numpyro-ext.readthedocs.io
+enable_mypy: false
+enable_pybind11: false
+enable_windows: true
+general_nox_sessions: '"lint"'
+project_description: Some extensions to numpyro that I find useful
+project_development_status: beta
+project_line_length: 79
+project_name: numpyro-ext
+python_formal_min_version: 7
+python_max_version: 10
+python_min_version: 7
+python_nox_sessions: '"tests"'
+python_package_distribution_name: numpyro-ext
+python_package_import_name: numpyro_ext
+readthedocs_project_name: numpyro-ext
+repository_name: numpyro-ext
+repository_namespace: dfm
+
