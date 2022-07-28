@@ -1,12 +1,11 @@
 __all__ = ["QuadLDParams"]
 
 import jax
-from jax import lax
 import jax.numpy as jnp
 import numpyro.distributions as dist
+from jax import lax
 from numpyro.distributions import constraints, transforms
-from numpyro.distributions.util import validate_sample, is_prng_key
-
+from numpyro.distributions.util import is_prng_key, validate_sample
 
 # ---------------
 # - Constraints -
