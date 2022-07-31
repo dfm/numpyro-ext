@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import numpyro
 from numpyro import distributions as dist
 from numpyro import infer
-from numpyro.infer.initialization import init_to_uniform, init_to_value
+from numpyro.infer.initialization import init_to_uniform
 from numpyro.optim import _NumPyroOptim
 
 
@@ -23,8 +23,7 @@ def optimize(
         state = svi.init(init_key, *args, **kwargs)
         state, _ = svi.update(state, *args, *kwargs)
         params = svi.get_params(state)
-        values = guide.sample_posterior(sample_key, params)
-        return init_to_value(values=values)
+        return guide.sample_posterior(sample_key, params)
 
     return run
 
