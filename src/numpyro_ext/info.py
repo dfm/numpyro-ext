@@ -54,7 +54,6 @@ def information(model, params, *args, invert=False, **kwargs):
         return tuple(results)
 
     flat_params, unravel = ravel_pytree(params)
-
     Js = jax.jacobian(inner)(flat_params, unravel, model, *args, **kwargs)
     F = jnp.zeros((flat_params.shape[0], flat_params.shape[0]))
     for J in Js:
@@ -63,4 +62,12 @@ def information(model, params, *args, invert=False, **kwargs):
     if invert:
         F = jnp.linalg.inv(F)
 
-    return jax.tree_map(unravel, jax.vmap(unravel)(F))
+    def unravel_batched(row):
+        if jnp.ndim(row) == 1:
+            return unravel(row)
+        func = unravel
+        for n in range(1, jnp.ndim(row)):
+            func = jax.vmap(func, in_axes=(n,))
+        return func(row)
+
+    return jax.tree_map(unravel_batched, jax.vmap(unravel)(F))

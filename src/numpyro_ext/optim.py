@@ -21,7 +21,7 @@ def optimize(
     def run(rng_key, *args, **kwargs):
         init_key, sample_key = jax.random.split(rng_key)
         state = svi.init(init_key, *args, **kwargs)
-        state, _ = svi.update(state, *args, *kwargs)
+        state, _ = svi.update(state, *args, **kwargs)
         params = svi.get_params(state)
         return guide.sample_posterior(sample_key, params)
 
@@ -50,6 +50,7 @@ class JAXOptMinimize(_NumPyroOptim):
         from jaxopt import ScipyMinimize
 
         def loss(p):
+            print(self.kwargs)
             out, aux = fn(p, *self.args, **self.kwargs)
             if aux is not None:
                 raise ValueError(
