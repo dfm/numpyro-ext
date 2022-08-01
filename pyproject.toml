@@ -22,6 +22,7 @@ dependencies = ["numpyro"]
 [project.optional-dependencies]
 test = ["pytest"]
 docs = []
+ncx2 = ["tensorflow-probability"]
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel", "setuptools_scm"]

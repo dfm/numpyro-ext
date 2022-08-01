@@ -7,13 +7,18 @@ import jax.numpy as jnp
 import numpyro
 from numpyro import distributions as dist
 from numpyro import infer
-from numpyro.infer.initialization import init_to_uniform
+from numpyro.infer.initialization import init_to_median, init_to_value
 from numpyro.optim import _NumPyroOptim
 
 
 def optimize(
-    model, sites=None, *, init_strategy=init_to_uniform, optimizer=None
+    model, sites=None, start=None, *, init_strategy=None, optimizer=None
 ):
+    if start is not None:
+        init_strategy = init_to_value(values=start)
+    elif init_strategy is None:
+        init_strategy = init_to_median()
+
     optimizer = JAXOptMinimize() if optimizer is None else optimizer
     guide = AutoDelta(model, sites=sites, init_loc_fn=init_strategy)
     svi = infer.SVI(model, guide, optimizer, loss=infer.Trace_ELBO())
@@ -50,7 +55,6 @@ class JAXOptMinimize(_NumPyroOptim):
         from jaxopt import ScipyMinimize
 
         def loss(p):
-            print(self.kwargs)
             out, aux = fn(p, *self.args, **self.kwargs)
             if aux is not None:
                 raise ValueError(
