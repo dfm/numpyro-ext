@@ -33,36 +33,36 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
           fetch-depth: 0
       - name: Configure Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Cache pip packages
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: pip-${{ matrix.nox-session }}-${{ hashFiles('**/noxfile.py') }}
+          key: ${{ runner.os }}-pip-${{ matrix.nox-session }}-${{ hashFiles('**/noxfile.py') }}
           restore-keys: |
-            pip-${{ matrix.nox-session }}-
+            ${{ runner.os }}-pip-${{ matrix.nox-session }}-
       - name: Cache nox session files
         uses: actions/cache@v3
         with:
           path: .nox
-          key: nox-${{ matrix.nox-session }}-${{ hashFiles('**/noxfile.py') }}
+          key: ${{ runner.os }}-nox-${{ matrix.nox-session }}-${{ hashFiles('**/noxfile.py') }}
           restore-keys: |
-            nox-${{ matrix.nox-session }}-
+            ${{ runner.os }}-nox-${{ matrix.nox-session }}-
       - name: Cache pre-commit environments
         if: ${{ matrix.nox-session == 'lint' }}
         uses: actions/cache@v3
         with:
           path: ~/.cache/pre-commit
-          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
-            pre-commit-
+            ${{ runner.os }}-pre-commit-
       - name: Install nox
         run: |
           python -m pip install -U pip
@@ -73,7 +73,7 @@ jobs:
   release:
     if: ${{ inputs.prerelease || startsWith(github.ref, 'refs/tags/') }}
     needs: tests
-    uses: dfm/workflows/.github/workflows/python-release.yml@main
+    uses: dfm/workflows/.github/workflows/python-release.yml@v0.1.0
     with:
       wheels: false
       enable-windows: false
