@@ -4,7 +4,7 @@ description = "Some extensions to numpyro that I find useful"
 authors = [{ name = "Dan Foreman-Mackey", email = "foreman.mackey@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.7"
-license = { file = "LICENSE" }
+license = { text = "Apache License" }
 classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -47,7 +47,11 @@ known_first_party = ["numpyro_ext"]
 parallel = true
 branch = true
 source = ["numpyro_ext"]
-omit = ["docs/*", "tests/*", "*/numpyro_ext/numpyro_ext_version.py"]
+omit = [
+    "docs/*",
+    "tests/*",
+    "*/numpyro_ext/version.py",
+]
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]

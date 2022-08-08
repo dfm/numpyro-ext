@@ -1,0 +1,10 @@
+diff a/pyproject.toml b/pyproject.toml	(rejected hunks)
+@@ -58,7 +49,3 @@ branch = true
+ source = ["numpyro_ext"]
+-omit = [
+-    "docs/*",
+-    "tests/*",
+-    "*/numpyro_ext/numpyro_ext_version.py",
+-]
++omit = ["docs/*", "tests/*", "*/numpyro_ext/numpyro_ext_version.py"]
+ 
