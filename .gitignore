@@ -10,3 +10,4 @@ _skbuild
 .coverage
 .coverage*
 dist
+build
