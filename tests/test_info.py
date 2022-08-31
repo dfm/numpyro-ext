@@ -7,6 +7,11 @@ from numpyro import distributions as dist
 from numpyro_ext import info
 
 
+def assert_allclose(a, b, **kwargs):
+    kwargs["rtol"] = kwargs.get("rtol", 2e-5)
+    return np.testing.assert_allclose(a, b, **kwargs)
+
+
 @pytest.fixture
 def linear_data():
     x = jnp.linspace(0, 10, 100)
@@ -30,13 +35,11 @@ def test_linear(linear_data):
         )
 
     params = {"w": jnp.zeros(2)}
-    calc = info.information(model, params, x, y=y)
-    np.testing.assert_allclose(calc["w"]["w"], expect, rtol=2e-6)
+    calc = info.information(model)(params, x, y=y)
+    assert_allclose(calc["w"]["w"], expect, rtol=2e-6)
 
-    calc = info.information(model, params, x, y=y, invert=True)
-    np.testing.assert_allclose(
-        calc["w"]["w"], jnp.linalg.inv(expect), rtol=2e-6
-    )
+    calc = info.information(model, invert=True)(params, x, y=y)
+    assert_allclose(calc["w"]["w"], jnp.linalg.inv(expect), rtol=2e-6)
 
 
 def test_linear_multi_in(linear_data):
@@ -52,23 +55,23 @@ def test_linear_multi_in(linear_data):
         )
 
     params = {"m": 0.0, "b": 0.0}
-    calc = info.information(model, params, x, y=y)
+    calc = info.information(model)(params, x, y=y)
     calc = jnp.array(
         [
             [calc["m"]["m"], calc["m"]["b"]],
             [calc["b"]["m"], calc["b"]["b"]],
         ]
     )
-    np.testing.assert_allclose(calc, expect, rtol=2e-6)
+    assert_allclose(calc, expect, rtol=2e-6)
 
-    calc = info.information(model, params, x, y=y, invert=True)
+    calc = info.information(model, invert=True)(params, x, y=y)
     calc = jnp.array(
         [
             [calc["m"]["m"], calc["m"]["b"]],
             [calc["b"]["m"], calc["b"]["b"]],
         ]
     )
-    np.testing.assert_allclose(calc, jnp.linalg.inv(expect), rtol=2e-6)
+    assert_allclose(calc, jnp.linalg.inv(expect), rtol=2e-6)
 
 
 def test_linear_multi_out(linear_data):
@@ -85,10 +88,8 @@ def test_linear_multi_out(linear_data):
             numpyro.sample(f"y{n}", dist.Normal(mu[n], yerr), obs=y[n])
 
     params = {"w": jnp.zeros(2)}
-    calc = info.information(model, params, x, y=y)
-    np.testing.assert_allclose(calc["w"]["w"], expect, rtol=2e-6)
+    calc = info.information(model)(params, x, y=y)
+    assert_allclose(calc["w"]["w"], expect, rtol=2e-6)
 
-    calc = info.information(model, params, x, y=y, invert=True)
-    np.testing.assert_allclose(
-        calc["w"]["w"], jnp.linalg.inv(expect), rtol=2e-6
-    )
+    calc = info.information(model, invert=True)(params, x, y=y)
+    assert_allclose(calc["w"]["w"], jnp.linalg.inv(expect), rtol=2e-6)
