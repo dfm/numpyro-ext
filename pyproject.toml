@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=62.0", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "numpyro-ext"
 description = "Some extensions to numpyro that I find useful"
@@ -23,10 +27,6 @@ dependencies = ["numpyro"]
 test = ["pytest"]
 docs = []
 ncx2 = ["tensorflow-probability"]
-
-[build-system]
-requires = ["setuptools>=61.0", "wheel", "setuptools_scm"]
-build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 write_to = "src/numpyro_ext/version.py"
