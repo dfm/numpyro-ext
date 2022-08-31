@@ -36,10 +36,10 @@ def test_linear(linear_data):
 
     params = {"w": jnp.zeros(2)}
     calc = info.information(model)(params, x, y=y)
-    assert_allclose(calc["w"]["w"], expect, rtol=2e-6)
+    assert_allclose(calc["w"]["w"], expect)
 
     calc = info.information(model, invert=True)(params, x, y=y)
-    assert_allclose(calc["w"]["w"], jnp.linalg.inv(expect), rtol=2e-6)
+    assert_allclose(calc["w"]["w"], jnp.linalg.inv(expect))
 
 
 def test_linear_multi_in(linear_data):
@@ -62,7 +62,7 @@ def test_linear_multi_in(linear_data):
             [calc["b"]["m"], calc["b"]["b"]],
         ]
     )
-    assert_allclose(calc, expect, rtol=2e-6)
+    assert_allclose(calc, expect)
 
     calc = info.information(model, invert=True)(params, x, y=y)
     calc = jnp.array(
@@ -71,7 +71,7 @@ def test_linear_multi_in(linear_data):
             [calc["b"]["m"], calc["b"]["b"]],
         ]
     )
-    assert_allclose(calc, jnp.linalg.inv(expect), rtol=2e-6)
+    assert_allclose(calc, jnp.linalg.inv(expect))
 
 
 def test_linear_multi_out(linear_data):
@@ -89,7 +89,7 @@ def test_linear_multi_out(linear_data):
 
     params = {"w": jnp.zeros(2)}
     calc = info.information(model)(params, x, y=y)
-    assert_allclose(calc["w"]["w"], expect, rtol=2e-6)
+    assert_allclose(calc["w"]["w"], expect)
 
     calc = info.information(model, invert=True)(params, x, y=y)
-    assert_allclose(calc["w"]["w"], jnp.linalg.inv(expect), rtol=2e-6)
+    assert_allclose(calc["w"]["w"], jnp.linalg.inv(expect))
