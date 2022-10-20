@@ -60,6 +60,9 @@ def optimize(
         include_deterministics: If ``True``, return the values of the
             deterministics computed at the optimized parameters, in addition to
             the parameter values.
+        return_info: If ``True``, the returned function will return a tuple with
+            the parameters as the first element, and scipy's minimization status
+            as the second element.
 
     Returns:
         A callable that will execute the optimization routine, with the
