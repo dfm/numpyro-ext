@@ -80,26 +80,29 @@ def optimize(
         init_key, sample_key, pred_key = jax.random.split(rng_key, 3)
         state = svi.init(init_key, *args, **kwargs)
         for _ in range(num_steps):
-            state, info = svi.update(state, *args, **kwargs)
+            state, _ = svi.update(state, *args, **kwargs)
+        info = state.optim_state[1].state
         params = svi.get_params(state)
         sample = guide.sample_posterior(sample_key, params)
-        if not include_deterministics:
-            return sample
-        pred = tree_map(
-            lambda x: x[0],
-            infer.Predictive(model, tree_map(lambda x: x[None], sample))(
-                pred_key, *args, **kwargs
-            ),
-        )
-        return dict(sample, **pred)
+        if include_deterministics:
+            pred = tree_map(
+                lambda x: x[0],
+                infer.Predictive(model, tree_map(lambda x: x[None], sample))(
+                    pred_key, *args, **kwargs
+                ),
+            )
+            sample = dict(sample, **pred)
+        if return_info:
+            return sample, info
+        return sample
 
     return run
 
 
 def _jaxopt_wrapper():
     def init_fn(params):
+        from jaxopt._src.scipy_wrappers import ScipyMinimizeInfo
         from jaxopt.base import OptStep
-        from jaxopt._src import ScipyMinimizeInfo
 
         return OptStep(
             params=params,
@@ -148,9 +151,8 @@ class JAXOptMinimize(_NumPyroOptim):
             return out
 
         solver = ScipyMinimize(fun=loss, **self.solver_kwargs)
-        i, params = in_state
-        out_state = solver.run(params)
-        return (out_state.state.fun_val, None), (i + 1, out_state)
+        out_state = solver.run(self.get_params(in_state))
+        return (out_state.state.fun_val, None), (in_state[0] + 1, out_state)
 
 
 class AutoDelta(infer.autoguide.AutoDelta):
