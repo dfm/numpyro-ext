@@ -21,6 +21,7 @@ def optimize(
     optimizer=None,
     num_steps=1,
     include_deterministics=True,
+    return_info=False,
 ):
     """Numerically maximize the log probability of a NumPyro model
 
@@ -79,7 +80,7 @@ def optimize(
         init_key, sample_key, pred_key = jax.random.split(rng_key, 3)
         state = svi.init(init_key, *args, **kwargs)
         for _ in range(num_steps):
-            state, _ = svi.update(state, *args, **kwargs)
+            state, info = svi.update(state, *args, **kwargs)
         params = svi.get_params(state)
         sample = guide.sample_posterior(sample_key, params)
         if not include_deterministics:
@@ -96,13 +97,27 @@ def optimize(
 
 
 def _jaxopt_wrapper():
-    def ident(x):
-        return x
+    def init_fn(params):
+        from jaxopt.base import OptStep
+        from jaxopt._src import ScipyMinimizeInfo
 
-    def update(*_, x):
-        return x
+        return OptStep(
+            params=params,
+            state=ScipyMinimizeInfo(
+                fun_val=jnp.zeros(()),
+                success=False,
+                status=0,
+                iter_num=0,
+            ),
+        )
 
-    return ident, update, ident
+    def update_fn(i, grad_tree, opt_state):
+        return opt_state
+
+    def get_params_fn(opt_state):
+        return opt_state.params
+
+    return init_fn, update_fn, get_params_fn
 
 
 class JAXOptMinimize(_NumPyroOptim):
@@ -135,7 +150,7 @@ class JAXOptMinimize(_NumPyroOptim):
         solver = ScipyMinimize(fun=loss, **self.solver_kwargs)
         i, params = in_state
         out_state = solver.run(params)
-        return (out_state.state.fun_val, None), (i + 1, out_state.params)
+        return (out_state.state.fun_val, None), (i + 1, out_state)
 
 
 class AutoDelta(infer.autoguide.AutoDelta):
