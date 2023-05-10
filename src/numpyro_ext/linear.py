@@ -1,5 +1,7 @@
 from functools import singledispatch
+from typing import Callable, NamedTuple
 
+import jax
 import jax.numpy as jnp
 from jax import lax, random
 from jax.scipy.linalg import cho_factor, cho_solve
@@ -13,8 +15,15 @@ from numpyro.distributions.distribution import Distribution
 from numpyro.distributions.util import is_prng_key, validate_sample
 
 
+class LinearOp(NamedTuple):
+    covariance: Callable[[], jax.Array]
+    inverse: Callable[[], jax.Array]
+    apply_inverse: Callable[[jax.Array], jax.Array]
+    half_log_det: Callable[[], jax.Array]
+
+
 @singledispatch
-def to_linear_op(dist):
+def to_linear_op(dist) -> LinearOp:
     raise ValueError(
         f"{type(dist)} doesn't support the 'to_linear_op' interface"
     )
@@ -27,19 +36,30 @@ def _(dist):
             jnp.square(jnp.atleast_1d(dist.scale))
         )
 
+    def inverse():
+        return jnp.vectorize(jnp.diag, signature="(n)->(n,n)")(
+            1.0 / jnp.square(jnp.atleast_1d(dist.scale))
+        )
+
     def apply_inverse(y):
         return y / jnp.square(dist.scale)[..., None]
 
     def half_log_det():
         return jnp.sum(jnp.log(jnp.atleast_1d(dist.scale)), axis=-1)
 
-    return covariance, apply_inverse, half_log_det
+    return LinearOp(covariance, inverse, apply_inverse, half_log_det)
 
 
 @to_linear_op.register(MultivariateNormal)
 def _(dist):
     def covariance():
         return dist.covariance_matrix
+
+    def inverse():
+        y = jnp.brodcast_to(
+            jnp.eye(dist.scale_tril.shape[-1]), dist.covariance_matrix.shape
+        )
+        return cho_solve((dist.scale_tril, True), y)
 
     def apply_inverse(y):
         return cho_solve((dist.scale_tril, True), y)
@@ -49,14 +69,17 @@ def _(dist):
             jnp.log(jnp.diagonal(dist.scale_tril, axis1=-2, axis2=-1)), -1
         )
 
-    return covariance, apply_inverse, half_log_det
+    return LinearOp(covariance, inverse, apply_inverse, half_log_det)
 
 
 @to_linear_op.register(ExpandedDistribution)
 def _(dist):
-    base_covariance, base_apply_inverse, base_half_log_det = to_linear_op(
-        dist.base_dist
-    )
+    (
+        base_covariance,
+        base_inverse,
+        base_apply_inverse,
+        base_half_log_det,
+    ) = to_linear_op(dist.base_dist)
     shape = dist.batch_shape + dist.event_shape
     batch_shape = shape[:-1]
     event_shape = shape[-1:]
@@ -67,6 +90,13 @@ def _(dist):
             assert cov.shape[-1] == 1
             cov = jnp.eye(event_shape[0]) * cov
         return jnp.broadcast_to(cov, batch_shape + event_shape + event_shape)
+
+    def inverse():
+        inv = base_covariance()
+        if inv.shape[-1:] != event_shape:
+            assert inv.shape[-1] == 1
+            inv = jnp.eye(event_shape[0]) * inv
+        return jnp.broadcast_to(inv, batch_shape + event_shape + event_shape)
 
     def apply_inverse(y):
         if jnp.ndim(y) < 2:
@@ -86,7 +116,7 @@ def _(dist):
             hld *= event_shape[0]
         return jnp.broadcast_to(hld, batch_shape)
 
-    return covariance, apply_inverse, half_log_det
+    return LinearOp(covariance, inverse, apply_inverse, half_log_det)
 
 
 class MarginalizedLinear(Distribution):
