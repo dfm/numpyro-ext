@@ -39,12 +39,6 @@ line-length = 88
 line-length = 89
 update-check = false
 target-version = "py38"
-# select = ["F", "I", "E", "W", "YTT", "B", "Q", "PLE", "PLW"]
-# ignore = [
-#     "E741", # Allow ambiguous variable names (e.g. "l" in starry)
-#     "B023", # Allow using global variables in lambdas
-# ]
-# exclude = []
 
 [tool.coverage.run]
 parallel = true
