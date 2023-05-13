@@ -32,26 +32,19 @@ ncx2 = ["tensorflow-probability"]
 write_to = "src/numpyro_ext/version.py"
 
 [tool.black]
-line-length = 79
+target-version = ["py38", "py39"]
+line-length = 88
 
-[tool.isort]
-skip_glob = []
-line_length = 79
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-known_first_party = ["numpyro_ext"]
+[tool.ruff]
+line-length = 89
+update-check = false
+target-version = "py38"
 
 [tool.coverage.run]
 parallel = true
 branch = true
 source = ["numpyro_ext"]
-omit = [
-    "docs/*",
-    "tests/*",
-    "*/numpyro_ext/version.py",
-]
+omit = ["docs/*", "tests/*", "*/numpyro_ext/version.py"]
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]

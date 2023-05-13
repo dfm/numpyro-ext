@@ -7,23 +7,24 @@ repos:
         language: fail
         files: "\\.rej$"
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.4.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
         exclude_types: [json, binary]
         exclude: ".copier-answers.yml"
       - id: check-yaml
-  - repo: https://github.com/PyCQA/isort
-    rev: "5.10.1"
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.0.265"
     hooks:
-      - id: isort
-        additional_dependencies: [toml]
+      - id: ruff
+        exclude: "^docs/"
+        args: [--fix, --exit-non-zero-on-fix]
   - repo: https://github.com/psf/black
-    rev: "22.6.0"
+    rev: "23.3.0"
     hooks:
       - id: black-jupyter
   - repo: https://github.com/kynan/nbstripout
-    rev: "0.6.0"
+    rev: "0.6.1"
     hooks:
       - id: nbstripout
