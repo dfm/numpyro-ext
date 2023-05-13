@@ -120,6 +120,10 @@ def information(model, invert=False, include_prior=False, unconstrained=False):
     Args:
         model: The NumPyro model definition.
         invert: If ``True``, the inverse information matrix will be returned.
+        include_prior: If ``True``, the Hessian of the log prior will be
+            subtracted from the information matrix.
+        unconstrained: If ``True``, the parameters are assumed to be in the
+            unconstrained space and the information is computed in that space.
 
     Returns:
         A callable with the signature ``def info(params, *args, **kwargs)`` to
