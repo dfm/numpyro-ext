@@ -34,9 +34,7 @@ def _information_and_log_prior_hessian(
         if site["type"] != "sample" or site["is_observed"]:
             continue
         if site["name"] not in params:
-            raise KeyError(
-                f"Input params is missing the site called '{site['name']}'"
-            )
+            raise KeyError(f"Input params is missing the site called '{site['name']}'")
         base_params[site["name"]] = params[site["name"]]
 
     # This function computes the terms of the likelihood that we will
@@ -51,9 +49,7 @@ def _information_and_log_prior_hessian(
         else:
             substituted_model = handlers.substitute(model, data=params)
 
-        trace = handlers.trace(substituted_model).get_trace(
-            *model_args, **model_kwargs
-        )
+        trace = handlers.trace(substituted_model).get_trace(*model_args, **model_kwargs)
 
         info_terms = []
         log_prior = jnp.zeros(())

@@ -163,9 +163,7 @@ def _(constraint):
     return transforms.ComposeTransform(
         [
             transforms.SigmoidTransform(),
-            transforms.AffineTransform(
-                -1.0, 2.0, domain=constraints.unit_interval
-            ),
+            transforms.AffineTransform(-1.0, 2.0, domain=constraints.unit_interval),
             UnitDiskTransform(),
         ]
     )
@@ -185,15 +183,11 @@ class QuadLDParams(dist.Distribution):
     support = quad_ld
 
     def __init__(self, *, validate_args=None):
-        super().__init__(
-            batch_shape=(), event_shape=(2,), validate_args=validate_args
-        )
+        super().__init__(batch_shape=(), event_shape=(2,), validate_args=validate_args)
 
     def sample(self, key, sample_shape=()):
         assert is_prng_key(key)
-        q = jax.random.uniform(
-            key, shape=sample_shape + (2,), minval=0, maxval=1
-        )
+        q = jax.random.uniform(key, shape=sample_shape + (2,), minval=0, maxval=1)
         return QuadLDParams.q2u(q)
 
     @validate_sample
@@ -231,9 +225,7 @@ class UnitDisk(dist.Distribution):
     support = unit_disk
 
     def __init__(self, *, validate_args=None):
-        super().__init__(
-            batch_shape=(), event_shape=(2,), validate_args=validate_args
-        )
+        super().__init__(batch_shape=(), event_shape=(2,), validate_args=validate_args)
 
     def sample(self, key, sample_shape=()):
         assert is_prng_key(key)
@@ -242,9 +234,7 @@ class UnitDisk(dist.Distribution):
             key1, shape=sample_shape, minval=-jnp.pi, maxval=jnp.pi
         )
         r = jnp.sqrt(
-            jax.random.uniform(
-                key2, shape=sample_shape, minval=0.0, maxval=1.0
-            )
+            jax.random.uniform(key2, shape=sample_shape, minval=0.0, maxval=1.0)
         )
         return jnp.stack((r * jnp.cos(theta), r * jnp.sin(theta)), axis=-1)
 
@@ -265,9 +255,7 @@ class UnitDisk(dist.Distribution):
 class Angle(dist.Distribution):
     def __init__(self, *, regularized=10.0, validate_args=None):
         self.regularized = regularized
-        super().__init__(
-            batch_shape=(), event_shape=(), validate_args=validate_args
-        )
+        super().__init__(batch_shape=(), event_shape=(), validate_args=validate_args)
 
     @constraints.dependent_property
     def support(self):
@@ -301,9 +289,7 @@ class Angle(dist.Distribution):
 
 
 class MixtureGeneral(dist.Distribution):
-    def __init__(
-        self, mixing_distribution, distributions, *, validate_args=None
-    ):
+    def __init__(self, mixing_distribution, distributions, *, validate_args=None):
         _check_mixing_distribution(mixing_distribution)
 
         self._mixture_size = jnp.shape(mixing_distribution.probs)[-1]
@@ -396,9 +382,7 @@ class MixtureGeneral(dist.Distribution):
 
     def tree_flatten(self):
         mixing_flat, mixing_aux = self.mixing_distribution.tree_flatten()
-        dists_flat, dists_aux = zip(
-            *(d.tree_flatten() for d in self.distributions)
-        )
+        dists_flat, dists_aux = zip(*(d.tree_flatten() for d in self.distributions))
         params = (mixing_flat, dists_flat)
         aux_data = (
             (
@@ -418,17 +402,13 @@ class MixtureGeneral(dist.Distribution):
             c.tree_unflatten(a, p)
             for c, a, p in zip(cls_dists, dists_aux, params_dists)
         ]
-        return cls(
-            mixing_distribution=mixing_dist, distributions=distributions
-        )
+        return cls(mixing_distribution=mixing_dist, distributions=distributions)
 
     @property
     def mean(self):
         probs = self.mixing_distribution.probs
         probs = probs.reshape(probs.shape + (1,) * self.event_dim)
-        means = jnp.stack(
-            [d.mean for d in self.distributions], axis=self.mixture_dim
-        )
+        means = jnp.stack([d.mean for d in self.distributions], axis=self.mixture_dim)
         return jnp.sum(probs * means, axis=self.mixture_dim)
 
     @property
@@ -436,17 +416,13 @@ class MixtureGeneral(dist.Distribution):
         probs = self.mixing_distribution.probs
         probs = probs.reshape(probs.shape + (1,) * self.event_dim)
 
-        means = jnp.stack(
-            [d.mean for d in self.distributions], axis=self.mixture_dim
-        )
+        means = jnp.stack([d.mean for d in self.distributions], axis=self.mixture_dim)
         variances = jnp.stack(
             [d.variance for d in self.distributions], axis=self.mixture_dim
         )
 
         mean_cond_var = jnp.sum(probs * variances, axis=self.mixture_dim)
-        sq_deviation = (
-            means - jnp.expand_dims(self.mean, axis=self.mixture_dim)
-        ) ** 2
+        sq_deviation = (means - jnp.expand_dims(self.mean, axis=self.mixture_dim)) ** 2
         var_cond_mean = jnp.sum(probs * sq_deviation, axis=self.mixture_dim)
         return mean_cond_var + var_cond_mean
 
@@ -456,7 +432,8 @@ class MixtureGeneral(dist.Distribution):
 
         :param value: samples from this distribution.
         :return: output of the cummulative distribution function evaluated at `value`.
-        :raises: NotImplementedError if the component distribution does not implement the cdf method.
+        :raises: NotImplementedError if the component distribution does not implement
+            the cdf method.
         """
         cdfs = jnp.stack(
             [d.cdf(samples) for d in self.distributions], axis=self.mixture_dim
@@ -486,9 +463,7 @@ class MixtureGeneral(dist.Distribution):
         return jnp.squeeze(samples_selected, axis=self.mixture_dim), indices
 
     def sample(self, key, sample_shape=()):
-        return self.sample_with_intermediates(
-            key=key, sample_shape=sample_shape
-        )[0]
+        return self.sample_with_intermediates(key=key, sample_shape=sample_shape)[0]
 
     @validate_sample
     def component_log_probs(self, value):
@@ -536,9 +511,7 @@ class NoncentralChi2(dist.Distribution):
         # random/src/distributions/distributions.c#L797-L813
 
         def _random_chi2(key, df, shape=(), dtype=jnp.float_):
-            return 2.0 * jax.random.gamma(
-                key, 0.5 * df, shape=shape, dtype=dtype
-            )
+            return 2.0 * jax.random.gamma(key, 0.5 * df, shape=shape, dtype=dtype)
 
         assert is_prng_key(key)
         shape = sample_shape + self.batch_shape + self.event_shape
@@ -569,10 +542,7 @@ class NoncentralChi2(dist.Distribution):
         # stats/_distn_infrastructure.py#L597-L610
         df2 = self.df / 2.0 - 1.0
         xs, ns = jnp.sqrt(value), jnp.sqrt(self.nc)
-        res = (
-            jsp.special.xlogy(df2 / 2.0, value / self.nc)
-            - 0.5 * (xs - ns) ** 2
-        )
+        res = jsp.special.xlogy(df2 / 2.0, value / self.nc) - 0.5 * (xs - ns) ** 2
         corr = tfp.math.bessel_ive(df2, xs * ns) / 2.0
         return jnp.where(
             jnp.greater(corr, 0.0),

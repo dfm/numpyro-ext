@@ -20,7 +20,7 @@ def optimize(
     init_strategy=None,
     optimizer=None,
     num_steps=1,
-    include_deterministics=True
+    include_deterministics=True,
 ):
     """Numerically maximize the log probability of a NumPyro model
 
@@ -96,8 +96,12 @@ def optimize(
 
 
 def _jaxopt_wrapper():
-    ident = lambda x: x
-    update = lambda *_, x: x
+    def ident(x):
+        return x
+
+    def update(*_, x):
+        return x
+
     return ident, update, ident
 
 
@@ -110,7 +114,7 @@ class JAXOptMinimize(_NumPyroOptim):
 
     def __init__(self, **kwargs):
         try:
-            import jaxopt
+            pass
         except ImportError:
             raise ImportError("jaxopt must be installed to use JAXOptMinimize")
 
@@ -153,7 +157,7 @@ class AutoDelta(infer.autoguide.AutoDelta):
         *,
         prefix="auto",
         init_loc_fn=infer.init_to_median,
-        create_plates=None
+        create_plates=None,
     ):
         self._sites = sites
         super().__init__(
@@ -190,9 +194,7 @@ class AutoDelta(infer.autoguide.AutoDelta):
                     site_fn = dist.Delta(site_loc).to_event(event_dim)
 
                 else:
-                    site_fn = dist.Delta(self._init_locs[name]).to_event(
-                        event_dim
-                    )
+                    site_fn = dist.Delta(self._init_locs[name]).to_event(event_dim)
 
                 result[name] = numpyro.sample(name, site_fn)
 
@@ -205,7 +207,6 @@ class AutoDelta(infer.autoguide.AutoDelta):
             for k, v in self._init_locs.items()
         }
         latent_samples = {
-            k: jnp.broadcast_to(v, sample_shape + jnp.shape(v))
-            for k, v in locs.items()
+            k: jnp.broadcast_to(v, sample_shape + jnp.shape(v)) for k, v in locs.items()
         }
         return latent_samples
