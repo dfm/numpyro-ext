@@ -1,4 +1,11 @@
-__all__ = ["QuadLDParams", "UnitDisk", "Angle", "MixtureGeneral", "NoncentralChi2"]
+__all__ = [
+    "QuadLDParams",
+    "UnitDisk",
+    "Angle",
+    "MixtureGeneral",
+    "NoncentralChi2",
+    "MarginalizedLinear",
+]
 
 import jax
 import jax.numpy as jnp
