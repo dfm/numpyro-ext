@@ -8,6 +8,12 @@ def tests(session):
 
 
 @nox.session
+def doctest(session):
+    session.install("-e", ".[test,ncx2]")
+    session.run("python", "-m", "doctest", "-v", "README.md")
+
+
+@nox.session
 def lint(session):
     session.install("pre-commit")
     session.run("pre-commit", "run", "--all-files")
