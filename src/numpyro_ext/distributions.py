@@ -297,10 +297,10 @@ class MixtureGeneral(dist.Distribution):
             distributions = [distributions] * self.mixture_size
         try:
             distributions = list(distributions)
-        except TypeError:
+        except TypeError as e:
             raise ValueError(
                 "The 'distributions' argument must be a list of Distribution objects"
-            )
+            ) from e
         for d in distributions:
             if not isinstance(d, dist.Distribution):
                 raise ValueError(
@@ -531,11 +531,11 @@ class NoncentralChi2(dist.Distribution):
     def log_prob(self, value):
         try:
             import tensorflow_probability.substrates.jax as tfp
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "tensorflow-probability is must be installed to use the "
                 "NoncentralChi2 distribution."
-            )
+            ) from e
 
         # Ref: https://github.com/scipy/scipy/blob/
         # 500878e88eacddc7edba93dda7d9ee5f784e50e6/scipy/

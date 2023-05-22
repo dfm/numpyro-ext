@@ -37,17 +37,10 @@ line-length = 88
 
 [tool.ruff]
 line-length = 89
-update-check = false
 target-version = "py38"
-
-[tool.coverage.run]
-parallel = true
-branch = true
-source = ["numpyro_ext"]
-omit = ["docs/*", "tests/*", "*/numpyro_ext/version.py"]
-
-[tool.coverage.paths]
-source = ["src", "*/site-packages"]
-
-[tool.coverage.report]
-show_missing = true
+select = ["F", "I", "E", "W", "YTT", "B", "Q", "PLE", "PLW"]
+ignore = [
+    "E741", # Allow ambiguous variable names (e.g. "l" in starry)
+    "B023", # Allow using global variables in lambdas
+]
+exclude = []
