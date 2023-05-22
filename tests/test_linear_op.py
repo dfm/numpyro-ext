@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from numpyro import distributions
+
 from numpyro_ext.linear_op import to_linear_op
 
 

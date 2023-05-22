@@ -36,6 +36,7 @@ target-version = ["py38", "py39"]
 line-length = 88
 
 [tool.ruff]
+src = ["src"]
 line-length = 89
 target-version = "py38"
 select = ["F", "I", "E", "W", "YTT", "B", "Q", "PLE", "PLW"]
