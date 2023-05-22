@@ -17,7 +17,7 @@ class LinearOp(NamedTuple):
     loc: Callable[[], Array]
     covariance: Callable[[], Array]
     inverse: Callable[[], Array]
-    solve_tril: Callable[[Array], Array]
+    solve_tril: Callable[[Array, bool], Array]
     half_log_det: Callable[[], Array]
 
 
@@ -28,26 +28,27 @@ def to_linear_op(dist) -> LinearOp:
 
 @to_linear_op.register(Normal)
 def _(dist):
+    scale = jnp.broadcast_to(dist.scale, dist.shape())
+
     def loc():
         return jnp.broadcast_to(dist.loc, dist.shape())
 
     def covariance():
-        scale = jnp.broadcast_to(dist.scale, dist.shape())
         return jnp.vectorize(jnp.diag, signature="(n)->(n,n)")(
             jnp.square(jnp.atleast_1d(scale))
         )
 
     def inverse():
-        scale = jnp.broadcast_to(dist.scale, dist.shape())
         return jnp.vectorize(jnp.diag, signature="(n)->(n,n)")(
             1.0 / jnp.square(jnp.atleast_1d(scale))
         )
 
-    def solve_tril(y):
-        return y / jnp.square(dist.scale)[..., None]
+    def solve_tril(y, transpose):
+        del transpose
+        return y / jnp.atleast_1d(scale)[..., None]
 
     def half_log_det():
-        return jnp.sum(jnp.log(jnp.atleast_1d(dist.scale)), axis=-1)
+        return jnp.sum(jnp.log(jnp.atleast_1d(scale)), axis=-1)
 
     return LinearOp(loc, covariance, inverse, solve_tril, half_log_det)
 
@@ -66,8 +67,8 @@ def _(dist):
         )
         return cho_solve((dist.scale_tril, True), y)
 
-    def solve_tril(y):
-        return solve_triangular(dist.scale_tril, y, lower=True)
+    def solve_tril(y, transpose):
+        return solve_triangular(dist.scale_tril, y, trans=transpose, lower=True)
 
     def half_log_det():
         return jnp.sum(jnp.log(jnp.diagonal(dist.scale_tril, axis1=-2, axis2=-1)), -1)
@@ -106,7 +107,7 @@ def _(dist):
             inv = jnp.eye(event_shape[0]) * inv
         return jnp.broadcast_to(inv, batch_shape + event_shape + event_shape)
 
-    def solve_tril(y):
+    def solve_tril(y, transpose):
         if jnp.ndim(y) < 2:
             raise ValueError(
                 "An expanded linear operator's inverse is only defined for matrices"
@@ -116,7 +117,9 @@ def _(dist):
             batch_shape,
             jnp.shape(y)[: max(jnp.ndim(y) - 2, 0)],
         )
-        alpha = jnp.vectorize(base_solve_tril, signature="(m,k)->(m,k)")(y)
+        alpha = jnp.vectorize(
+            lambda x: base_solve_tril(x, transpose), signature="(m,k)->(m,k)"
+        )(y)
         return jnp.broadcast_to(alpha, shape + y.shape[-2:])
 
     def half_log_det():

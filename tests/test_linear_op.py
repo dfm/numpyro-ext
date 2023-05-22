@@ -9,24 +9,24 @@ from numpyro_ext.linear_op import to_linear_op
 @pytest.mark.parametrize(
     "dist, expected_cov",
     [
-        (distributions.Normal(0.0, 1.0), jnp.ones((1, 1))),
+        (distributions.Normal(0.1, 0.5), 0.5**2 * jnp.ones((1, 1))),
         (
-            distributions.Normal(jnp.zeros(10), jnp.linspace(0.1, 0.5, 10)),
+            distributions.Normal(0.1 * jnp.ones(10), jnp.linspace(0.1, 0.5, 10)),
             jnp.diag(jnp.linspace(0.1, 0.5, 10) ** 2),
         ),
         (
-            distributions.Normal(0.0, jnp.linspace(0.1, 0.5, 10)),
+            distributions.Normal(0.1, jnp.linspace(0.1, 0.5, 10)),
             jnp.diag(jnp.linspace(0.1, 0.5, 10) ** 2),
         ),
-        (distributions.Normal(jnp.zeros(10), 1.0), jnp.eye(10)),
+        (distributions.Normal(0.1 * jnp.ones(10), 0.5), 0.5**2 * jnp.eye(10)),
         (
             distributions.MultivariateNormal(
-                jnp.zeros(10), jnp.diag(jnp.linspace(0.1, 0.5, 10))
+                0.1 * jnp.ones(10), jnp.diag(jnp.linspace(0.1, 0.5, 10))
             ),
             jnp.diag(jnp.linspace(0.1, 0.5, 10)),
         ),
         (
-            distributions.MultivariateNormal(0.0, jnp.diag(jnp.linspace(0.1, 0.5, 10))),
+            distributions.MultivariateNormal(0.1, jnp.diag(jnp.linspace(0.1, 0.5, 10))),
             jnp.diag(jnp.linspace(0.1, 0.5, 10)),
         ),
     ],
@@ -40,7 +40,12 @@ def test_linear_op(dist, expected_cov):
     np.testing.assert_allclose(op.loc(), mu)
     np.testing.assert_allclose(op.covariance(), expected_cov)
     np.testing.assert_allclose(op.inverse(), expected_inv, rtol=5e-6)
-    np.testing.assert_allclose(op.solve_tril(mu[:, None])[:, 0], alpha)
+    np.testing.assert_allclose(
+        op.solve_tril(mu[:, None], False)[:, 0], alpha, rtol=5e-6
+    )
+    np.testing.assert_allclose(
+        op.half_log_det(), 0.5 * np.linalg.slogdet(expected_cov)[1]
+    )
 
     shape = [2, 3, 4] + list(event_shape)
     if dist.event_shape:
@@ -59,5 +64,11 @@ def test_linear_op(dist, expected_cov):
         rtol=5e-6,
     )
     np.testing.assert_allclose(
-        op.solve_tril(mu[..., None])[..., 0], np.broadcast_to(alpha, shape)
+        op.solve_tril(mu[..., None], False)[..., 0],
+        np.broadcast_to(alpha, shape),
+        rtol=5e-6,
+    )
+    np.testing.assert_allclose(
+        op.half_log_det(),
+        jnp.broadcast_to(0.5 * np.linalg.slogdet(expected_cov)[1], shape[:-1]),
     )

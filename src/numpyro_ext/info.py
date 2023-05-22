@@ -12,7 +12,7 @@ from numpyro_ext.linear_op import to_linear_op
 
 def standardize(d):
     op = to_linear_op(d)
-    return op.solve_tril(op.loc())
+    return op.solve_tril(op.loc(), False)
 
 
 def _is_conditioned(site):
