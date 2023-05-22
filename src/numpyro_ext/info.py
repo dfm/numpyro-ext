@@ -71,7 +71,7 @@ def _information_and_log_prior_hessian(
             else:
                 log_prior += jnp.sum(site["fn"].log_prob(site["value"]))
 
-        return tuple(info_terms), log_prior
+        return tuple(info_terms) or (0.0,), log_prior
 
     flat_params, unravel = ravel_pytree(base_params)
 

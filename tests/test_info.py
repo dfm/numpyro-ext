@@ -1,3 +1,4 @@
+import jax
 import jax.numpy as jnp
 import numpy as np
 import numpyro
@@ -93,3 +94,21 @@ def test_linear_multi_out(linear_data):
 
     calc = info.information(model, invert=True)(params, x, y=y)
     assert_allclose(calc["w"]["w"], jnp.linalg.inv(expect))
+
+
+def test_factor():
+    def rosenbrock(x, y, a=1.0, b=100.0):
+        return jnp.log(jnp.square(a - x) + b * jnp.square(y - x**2))
+
+    def model():
+        x = numpyro.sample("x", dist.Uniform(-2, 2))
+        y = numpyro.sample("y", dist.Uniform(-1, 3))
+        numpyro.factor("prior", rosenbrock(x, y))
+
+    params = {"x": 0.0, "y": 2.0}
+    expect = jax.hessian(rosenbrock, argnums=(0, 1))(params["x"], params["y"])
+    calc = info.information(model, include_prior=True)(params)
+    assert_allclose(calc["x"]["x"], -expect[0][0])
+    assert_allclose(calc["x"]["y"], -expect[0][1])
+    assert_allclose(calc["y"]["x"], -expect[1][0])
+    assert_allclose(calc["y"]["y"], -expect[1][1])
