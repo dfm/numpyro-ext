@@ -112,3 +112,21 @@ def test_factor():
     assert_allclose(calc["x"]["y"], -expect[0][1])
     assert_allclose(calc["y"]["x"], -expect[1][0])
     assert_allclose(calc["y"]["y"], -expect[1][1])
+
+
+def test_unconstrained():
+    def model1(y=None):
+        x_ = numpyro.sample(
+            "x", dist.ImproperUniform(dist.constraints.real, (), event_shape=(1,))
+        )
+        x = dist.transforms.SigmoidTransform()(x_)
+        numpyro.sample("y", dist.Normal(x, 1.0), obs=y)
+
+    def model2(y=None):
+        x = numpyro.sample("x", dist.Uniform(0.0, 1.0))
+        numpyro.sample("y", dist.Normal(x, 1.0), obs=y)
+
+    y = 0.1
+    info1 = info.information(model1)({"x": 0.1}, y=y)
+    info2 = info.information(model2, unconstrained=True)({"x": 0.1}, y=y)
+    assert_allclose(info1["x"]["x"], info2["x"]["x"])
