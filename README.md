@@ -163,3 +163,89 @@ MultivariateNormal
  [...]]
 
 ```
+
+### Optimization
+
+The inference lore is a little mixed on the benefits of optimization as an
+initialization tool for MCMC, but I find that at least in a lot of astronomy
+applications, an initial optimization can make a huge difference in performance.
+Even if you don't want to use the optimization results as an initialization, it
+can still sometimes be useful to numerically search for the maximum _a
+posteriori_ parameters for your model. However, the NumPyro interface for these
+types of optimization isn't terribly user-friendly, so this library provides
+some helpers to make it a little more straightforward.
+
+By default, this optimization uses the wrappers of scipy's optimization routines
+provided by the [JAXopt](https://github.com/google/jaxopt) library, so you'll
+need to install JAXopt:
+
+```bash
+python -m pip install jaxopt
+```
+
+before running these examples.
+
+The following example shows a simple optimization of a model with a single
+parameter:
+
+```python
+>>> from numpyro_ext import optim as optimx
+>>>
+>>> def model(y=None):
+...     x = numpyro.sample("x", dist.Normal(0.0, 1.0))
+...     numpyro.sample("y", dist.Normal(x, 2.0), obs=y)
+...
+>>> soln = optimx.optimize(model)(key, y=0.5)
+
+```
+
+By default, the optimization starts from a prior sample, but you can provide
+custom initial coordinates as follows:
+
+```python
+>>> soln = optimx.optimize(model, start={"x": 12.3})(key, y=0.5)
+
+```
+
+Similarly, if you only want to optimize a subset of the parameters, you can
+provide a list of parameters to target:
+
+```python
+>>> soln = optimx.optimize(model, sites=["x"])(key, y=0.5)
+
+```
+
+### Information matrix computation
+
+The Fisher information matrix for models with Gaussian likelihoods is
+[straightforward to
+compute](https://en.wikipedia.org/wiki/Fisher_information#Multivariate_normal_distribution),
+and this library provides a helper function for automating this computation:
+
+```python
+>>> from numpyro_ext import information
+>>>
+>>> def model(x, y=None):
+...     a = numpyro.sample("a", dist.Normal(0.0, 1.0))
+...     b = numpyro.sample("b", dist.Normal(0.0, 1.0))
+...     log_alpha = numpyro.sample("log_alpha", dist.Normal(0.0, 1.0))
+...     cov = jnp.exp(log_alpha - 0.5 * (x[:, None] - x[None, :])**2)
+...     cov += 0.1 * jnp.eye(len(x))
+...     numpyro.sample(
+...         "y",
+...         dist.MultivariateNormal(loc=a * x + b, covariance_matrix=cov),
+...         obs=y,
+...     )
+...
+>>> x = jnp.linspace(-1.0, 1.0, 5)
+>>> y = jnp.sin(x)  # the input data just needs to have the right shape
+>>> params = {"a": 0.5, "b": -0.2, "log_alpha": -0.5}
+>>> info = information(model)(params, x, y=y)
+>>> print(info)
+{'a': {'a': ..., 'b': ... 'log_alpha': ...}, 'b': ...}
+
+```
+
+The returned information matrix is a nested dictionary of dictionaries, indexed
+by pairs of parameter names, where the values are the corresponding blocks of
+the information matrix.
