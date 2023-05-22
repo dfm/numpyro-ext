@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "numpyro-ext"
-description = "Some extensions to numpyro that I find useful"
+description = "A miscellaneous set of helper functions, custom distributions, and other utilities that I find useful when using NumPyro in my work"
 authors = [{ name = "Dan Foreman-Mackey", email = "foreman.mackey@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.8"
