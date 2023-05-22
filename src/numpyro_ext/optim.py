@@ -21,6 +21,7 @@ def optimize(
     optimizer=None,
     num_steps=1,
     include_deterministics=True,
+    return_info=False,
 ):
     """Numerically maximize the log probability of a NumPyro model
 
@@ -59,6 +60,9 @@ def optimize(
         include_deterministics: If ``True``, return the values of the
             deterministics computed at the optimized parameters, in addition to
             the parameter values.
+        return_info: If ``True``, the returned function will return a tuple with
+            the parameters as the first element, and scipy's minimization status
+            as the second element.
 
     Returns:
         A callable that will execute the optimization routine, with the
@@ -80,29 +84,46 @@ def optimize(
         state = svi.init(init_key, *args, **kwargs)
         for _ in range(num_steps):
             state, _ = svi.update(state, *args, **kwargs)
+        info = getattr(state.optim_state[1], "state", None)
         params = svi.get_params(state)
         sample = guide.sample_posterior(sample_key, params)
-        if not include_deterministics:
-            return sample
-        pred = tree_map(
-            lambda x: x[0],
-            infer.Predictive(model, tree_map(lambda x: x[None], sample))(
-                pred_key, *args, **kwargs
-            ),
-        )
-        return dict(sample, **pred)
+        if include_deterministics:
+            pred = tree_map(
+                lambda x: x[0],
+                infer.Predictive(model, tree_map(lambda x: x[None], sample))(
+                    pred_key, *args, **kwargs
+                ),
+            )
+            sample = dict(sample, **pred)
+        if return_info:
+            return sample, info
+        return sample
 
     return run
 
 
 def _jaxopt_wrapper():
-    def ident(x):
-        return x
+    def init_fn(params):
+        from jaxopt._src.scipy_wrappers import ScipyMinimizeInfo
+        from jaxopt.base import OptStep
 
-    def update(*_, x):
-        return x
+        return OptStep(
+            params=params,
+            state=ScipyMinimizeInfo(
+                fun_val=jnp.zeros(()),
+                success=False,
+                status=0,
+                iter_num=0,
+            ),
+        )
 
-    return ident, update, ident
+    def update_fn(i, grad_tree, opt_state):
+        return opt_state
+
+    def get_params_fn(opt_state):
+        return opt_state.params
+
+    return init_fn, update_fn, get_params_fn
 
 
 class JAXOptMinimize(_NumPyroOptim):
@@ -122,6 +143,7 @@ class JAXOptMinimize(_NumPyroOptim):
         self.solver_kwargs = {} if kwargs is None else kwargs
 
     def eval_and_update(self, fn, in_state):
+        import scipy.optimize  # noqa
         from jaxopt import ScipyMinimize
 
         def loss(p):
@@ -133,9 +155,8 @@ class JAXOptMinimize(_NumPyroOptim):
             return out
 
         solver = ScipyMinimize(fun=loss, **self.solver_kwargs)
-        i, params = in_state
-        out_state = solver.run(params)
-        return (out_state.state.fun_val, None), (i + 1, out_state.params)
+        out_state = solver.run(self.get_params(in_state))
+        return (out_state.state.fun_val, None), (in_state[0] + 1, out_state)
 
 
 class AutoDelta(infer.autoguide.AutoDelta):
