@@ -1,13 +1,18 @@
-__all__ = ["information", "standardize"]
+__all__ = ["information"]
 
-from functools import partial, singledispatch
+from functools import partial
 
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
-from jax.scipy.linalg import solve_triangular
-from numpyro import distributions as dist
 from numpyro import handlers, infer
+
+from numpyro_ext.linear_op import to_linear_op
+
+
+def standardize(d):
+    op = to_linear_op(d)
+    return op.solve_tril(op.loc())
 
 
 def _is_conditioned(site):
@@ -138,35 +143,3 @@ def information(model, invert=False, include_prior=False, unconstrained=False):
         include_prior=include_prior,
         unconstrained=unconstrained,
     )
-
-
-@singledispatch
-def standardize(d):
-    raise ValueError(
-        f"Unhandled observed site type: {type(d)}\n"
-        "To implement information support for this distribution, register "
-        "a custom 'standardize' transform:\n"
-        f"@numpyro_ext.info.standardize.register({type(d)})\n"
-        "def custom(d): ..."
-    )
-
-
-@standardize.register(dist.Normal)
-def _(d):
-    return d.loc / d.scale
-
-
-@standardize.register(dist.MultivariateNormal)
-def _(d):
-    return solve_triangular(d.scale_tril, d.loc, lower=True)
-
-
-try:
-    from tinygp.numpyro_support import TinyDistribution
-except ImportError:
-    pass
-else:
-
-    @standardize.register(TinyDistribution)
-    def _(d):
-        return d.gp.solver.solve_triangular(d.loc)

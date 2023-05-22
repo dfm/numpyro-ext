@@ -115,8 +115,8 @@ class JAXOptMinimize(_NumPyroOptim):
     def __init__(self, **kwargs):
         try:
             pass
-        except ImportError:
-            raise ImportError("jaxopt must be installed to use JAXOptMinimize")
+        except ImportError as e:
+            raise ImportError("jaxopt must be installed to use JAXOptMinimize") from e
 
         super().__init__(_jaxopt_wrapper)
         self.solver_kwargs = {} if kwargs is None else kwargs
