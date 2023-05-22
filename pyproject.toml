@@ -24,7 +24,7 @@ dependencies = ["numpyro"]
 "Bug Tracker" = "https://github.com/dfm/numpyro-ext/issues"
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "jaxopt"]
 docs = []
 ncx2 = ["tensorflow-probability"]
 
