@@ -445,7 +445,7 @@ class MarginalizedLinear(dist.Distribution):
     def sample(self, key, sample_shape=()):
         return self.sample_with_intermediates(key, sample_shape)[0]
 
-    def _solve(self, value):
+    def log_prob_and_conditional(self, value):
         data_size, _ = jnp.shape(self.design_matrix)[-2:]
         assert jnp.shape(value)[-1] == data_size
         prior = to_linear_op(self.prior_distribution)
@@ -478,11 +478,14 @@ class MarginalizedLinear(dist.Distribution):
         a = prior.solve_tril(prior.solve_tril(prior.loc()[..., None], False), True)
         a = cho_solve((factor, lower), (a + alpha)[..., 0])
 
-        return log_prob, a, sigma
+        return log_prob, dist.MultivariateNormal(loc=a, precision_matrix=sigma)
 
     @validate_sample
     def log_prob(self, value):
-        return self._solve(value)[0]
+        return self.log_prob_and_conditional(value)[0]
+
+    def conditional(self, value):
+        return self.log_prob_and_conditional(value)[1]
 
     def tree_flatten(self):
         prior_flat, prior_aux = self.prior_distribution.tree_flatten()
@@ -518,7 +521,3 @@ class MarginalizedLinear(dist.Distribution):
         return data.cov() + self.design_matrix @ prior.cov() @ jnp.swapaxes(
             self.design_matrix, -2, -1
         )
-
-    def conditional_weights_distribution(self, value):
-        _, a, A_inv = self._solve(value)
-        return dist.MultivariateNormal(loc=a, precision_matrix=A_inv)

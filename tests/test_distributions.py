@@ -60,7 +60,7 @@ def test_numerical_posterior():
         marg = distx.MarginalizedLinear(jnp.vander(x, 2), prior, data)
         numpyro.sample("y", marg, obs=y)
         if y is not None:
-            numpyro.sample("w", marg.conditional_weights_distribution(y))
+            numpyro.sample("w", marg.conditional(y))
 
     marg_mcmc = infer.MCMC(
         infer.NUTS(marg_model),
