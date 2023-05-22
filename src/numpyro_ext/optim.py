@@ -143,6 +143,7 @@ class JAXOptMinimize(_NumPyroOptim):
         self.solver_kwargs = {} if kwargs is None else kwargs
 
     def eval_and_update(self, fn, in_state):
+        import scipy.optimize  # noqa
         from jaxopt import ScipyMinimize
 
         def loss(p):
