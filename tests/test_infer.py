@@ -18,4 +18,4 @@ def test_prior_sample(prior):
     expect = -0.5 * ((samples["x"] - samples["y"]) / 2.0) ** 2 - 0.5 * jnp.log(
         2 * jnp.pi * 2.0**2
     )
-    np.testing.assert_allclose(log_like["y"], expect)
+    np.testing.assert_allclose(log_like, expect)
