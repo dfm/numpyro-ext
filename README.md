@@ -214,3 +214,38 @@ provide a list of parameters to target:
 >>> soln = optimx.optimize(model, sites=["x"])(key, y=0.5)
 
 ```
+
+### Information matrix computation
+
+The Fisher information matrix for models with Gaussian likelihoods is
+[straightforward to
+compute](https://en.wikipedia.org/wiki/Fisher_information#Multivariate_normal_distribution),
+and this library provides a helper function for automating this computation:
+
+```python
+>>> from numpyro_ext import information
+>>>
+>>> def model(x, y=None):
+...     a = numpyro.sample("a", dist.Normal(0.0, 1.0))
+...     b = numpyro.sample("b", dist.Normal(0.0, 1.0))
+...     log_alpha = numpyro.sample("log_alpha", dist.Normal(0.0, 1.0))
+...     cov = jnp.exp(log_alpha - 0.5 * (x[:, None] - x[None, :])**2)
+...     cov += 0.1 * jnp.eye(len(x))
+...     numpyro.sample(
+...         "y",
+...         dist.MultivariateNormal(loc=a * x + b, covariance_matrix=cov),
+...         obs=y,
+...     )
+...
+>>> x = jnp.linspace(-1.0, 1.0, 5)
+>>> y = jnp.sin(x)  # the input data just needs to have the right shape
+>>> params = {"a": 0.5, "b": -0.2, "log_alpha": -0.5}
+>>> info = information(model)(params, x, y=y)
+>>> print(info)
+{'a': {'a': ..., 'b': ... 'log_alpha': ...}, 'b': ...}
+
+```
+
+The returned information matrix is a nested dictionary of dictionaries, indexed
+by pairs of parameter names, where the values are the corresponding blocks of
+the information matrix.
