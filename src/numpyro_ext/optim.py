@@ -84,7 +84,7 @@ def optimize(
         state = svi.init(init_key, *args, **kwargs)
         for _ in range(num_steps):
             state, _ = svi.update(state, *args, **kwargs)
-        info = getattr(state.optim_state[1], 'state', None)
+        info = getattr(state.optim_state[1], "state", None)
         params = svi.get_params(state)
         sample = guide.sample_posterior(sample_key, params)
         if include_deterministics:
