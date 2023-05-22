@@ -30,6 +30,9 @@ jobs:
             nox-session: "tests"
           - os: ubuntu-latest
             python-version: "3.10"
+            nox-session: "doctest"
+          - os: ubuntu-latest
+            python-version: "3.10"
             nox-session: "lint"
 
     steps:

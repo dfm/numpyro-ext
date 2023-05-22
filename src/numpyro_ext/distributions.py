@@ -181,6 +181,13 @@ def _(constraint):
 
 
 class QuadLDParams(dist.Distribution):
+    """An uninformative prior for quadratic limb darkening parameters
+
+    This is an implementation of the `Kipping (2013)
+    <https://arxiv.org/abs/1308.0009>`_ re-parameterization of the two-parameter
+    limb darkening model to allow for efficient and uninformative sampling.
+    """
+
     support = quad_ld
 
     def __init__(self, *, validate_args=None):
@@ -223,6 +230,8 @@ class QuadLDParams(dist.Distribution):
 
 
 class UnitDisk(dist.Distribution):
+    """Two dimensional parameters constrained to live within the unit disk"""
+
     support = unit_disk
 
     def __init__(self, *, validate_args=None):
@@ -254,6 +263,19 @@ class UnitDisk(dist.Distribution):
 
 
 class Angle(dist.Distribution):
+    """An angle constrained to be in the range -pi to pi
+
+    The actual sampling is performed in the two dimensional vector space
+    proportional to ``(sin(theta), cos(theta))`` so that the sampler doesn't see
+    a discontinuity at pi.
+
+    The ``regularized`` parameter can be used to improve sampling performance
+    when the value of the angle is well constrained. It removes prior mass near
+    the origin in the sampling space, which can lead to bad geometry when the
+    angle is poorly constrained, but better performance when it is. The default
+    value of ``10.0`` is a good starting point.
+    """
+
     def __init__(self, *, regularized=10.0, validate_args=None):
         self.regularized = regularized
         super().__init__(batch_shape=(), event_shape=(), validate_args=validate_args)
@@ -445,7 +467,7 @@ class MarginalizedLinear(dist.Distribution):
     def sample(self, key, sample_shape=()):
         return self.sample_with_intermediates(key, sample_shape)[0]
 
-    def _solve(self, value):
+    def log_prob_and_conditional(self, value):
         data_size, _ = jnp.shape(self.design_matrix)[-2:]
         assert jnp.shape(value)[-1] == data_size
         prior = to_linear_op(self.prior_distribution)
@@ -478,11 +500,16 @@ class MarginalizedLinear(dist.Distribution):
         a = prior.solve_tril(prior.solve_tril(prior.loc()[..., None], False), True)
         a = cho_solve((factor, lower), (a + alpha)[..., 0])
 
-        return log_prob, a, sigma
+        return log_prob, dist.MultivariateNormal(loc=a, precision_matrix=sigma)
 
     @validate_sample
     def log_prob(self, value):
-        return self._solve(value)[0]
+        return self.log_prob_and_conditional(value)[0]
+
+    def conditional(self, value=None):
+        if value is None:
+            return self.prior_distribution
+        return self.log_prob_and_conditional(value)[1]
 
     def tree_flatten(self):
         prior_flat, prior_aux = self.prior_distribution.tree_flatten()
@@ -518,7 +545,3 @@ class MarginalizedLinear(dist.Distribution):
         return data.cov() + self.design_matrix @ prior.cov() @ jnp.swapaxes(
             self.design_matrix, -2, -1
         )
-
-    def conditional_weights_distribution(self, value):
-        _, a, A_inv = self._solve(value)
-        return dist.MultivariateNormal(loc=a, precision_matrix=A_inv)

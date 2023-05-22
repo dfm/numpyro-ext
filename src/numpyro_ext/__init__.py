@@ -11,3 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from numpyro_ext import distributions as distributions
+from numpyro_ext import infer as infer
+from numpyro_ext import optim as optim
+from numpyro_ext.info import information as information
