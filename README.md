@@ -163,3 +163,54 @@ MultivariateNormal
  [...]]
 
 ```
+
+### Optimization
+
+The inference lore is a little mixed on the benefits of optimization as an
+initialization tool for MCMC, but I find that at least in a lot of astronomy
+applications, an initial optimization can make a huge difference in performance.
+Even if you don't want to use the optimization results as an initialization, it
+can still sometimes be useful to numerically search for the maximum _a
+posteriori_ parameters for your model. However, the NumPyro interface for these
+types of optimization isn't terribly user-friendly, so this library provides
+some helpers to make it a little more straightforward.
+
+By default, this optimization uses the wrappers of scipy's optimization routines
+provided by the [JAXopt](https://github.com/google/jaxopt) library, so you'll
+need to install JAXopt:
+
+```bash
+python -m pip install jaxopt
+```
+
+before running these examples.
+
+The following example shows a simple optimization of a model with a single
+parameter:
+
+```python
+>>> from numpyro_ext import optim as optimx
+>>>
+>>> def model(y=None):
+...     x = numpyro.sample("x", dist.Normal(0.0, 1.0))
+...     numpyro.sample("y", dist.Normal(x, 2.0), obs=y)
+...
+>>> soln = optimx.optimize(model)(key, y=0.5)
+
+```
+
+By default, the optimization starts from a prior sample, but you can provide
+custom initial coordinates as follows:
+
+```python
+>>> soln = optimx.optimize(model, start={"x": 12.3})(key, y=0.5)
+
+```
+
+Similarly, if you only want to optimize a subset of the parameters, you can
+provide a list of parameters to target:
+
+```python
+>>> soln = optimx.optimize(model, sites=["x"])(key, y=0.5)
+
+```
