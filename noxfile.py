@@ -10,7 +10,17 @@ def tests(session):
 @nox.session
 def doctest(session):
     session.install("-e", ".[test,ncx2]")
-    session.run("python", "-m", "doctest", "-v", "README.md")
+    session.run(
+        "python",
+        "-m",
+        "doctest",
+        "-o",
+        "ELLIPSIS",
+        "-o",
+        "NORMALIZE_WHITESPACE",
+        "-v",
+        "README.md",
+    )
 
 
 @nox.session
