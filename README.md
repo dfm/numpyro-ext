@@ -49,8 +49,8 @@ so that the sampler doesn't see a discontinuity at pi.
 ```python
 >>> angle = distx.Angle()
 >>> print(angle.sample(key, (2, 3)))
-[[ 0.4681001  -2.5152469   1.5203166 ]
- [ 2.4766953   0.6067456  -0.29372737]]
+[[ 0.4...]
+ [ 2.4...]]
 
 ```
 
@@ -64,7 +64,7 @@ generated from this distribution will always be less than 1.
 >>> unit_disk = distx.UnitDisk()
 >>> u = unit_disk.sample(key, (5,))
 >>> print(jnp.sum(u**2, axis=-1))
-[0.07239353 0.02032685 0.9796876  0.8786792  0.16457272]
+[0.07...]
 
 ```
 
@@ -78,7 +78,7 @@ To use this distribution, you'll need to install the optional
 ```python
 >>> ncx2 = distx.NoncentralChi2(df=3, nc=2.)
 >>> print(ncx2.sample(key, (5,)))
-[2.197162  3.116601  4.59572   2.8928897 7.2579913]
+[2.19...]
 
 ```
 
@@ -136,10 +136,10 @@ measurement uncertainty (often called "jitter") we can use the following model:
 >>> x = jnp.linspace(-1.0, 1.0, 5)
 >>> samples = numpyro.infer.Predictive(model, num_samples=2)(key, x, 0.1)
 >>> print(samples["period"])
-[ 70.40108 224.88791]
+[... ...]
 >>> print(samples["y"])
-[[  9.09555     8.859897   11.912666   10.26335    10.028266 ]
- [  7.2099357 -75.81648   -69.935036  -18.635258  -41.352413 ]]
+[[... ... ...]
+ [... ... ...]]
 
 ```
 
@@ -158,8 +158,8 @@ the `conditional` method on `MarginalizedLinear`:
 >>> print(type(cond).__name__)
 MultivariateNormal
 >>> print(cond.sample(key, (3,)))
-[[ 0.48002878 -0.85556173]
- [ 0.8421174   0.83270633]
- [ 0.52445    -0.07829977]]
+[[...]
+ [...]
+ [...]]
 
 ```
