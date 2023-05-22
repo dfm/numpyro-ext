@@ -71,9 +71,6 @@ def _information_and_log_prior_hessian(
             else:
                 log_prior += jnp.sum(site["fn"].log_prob(site["value"]))
 
-        if not info_terms:
-            raise ValueError("No observed sites")
-
         return tuple(info_terms), log_prior
 
     flat_params, unravel = ravel_pytree(base_params)
