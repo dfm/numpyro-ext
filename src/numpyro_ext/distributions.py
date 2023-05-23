@@ -454,6 +454,22 @@ class MarginalizedLinear(dist.Distribution):
             validate_args=validate_args,
         )
 
+        # Convert the distributions to linear ops
+        self.prior_linear_op = to_linear_op(self.prior_distribution)
+        self.data_linear_op = to_linear_op(self.data_distribution)
+
+        # This inner matrix is used for both the matrix determinant and inverse
+        self.projected_design_matrix = self.data_linear_op.solve_tril(
+            self.design_matrix, False
+        )
+        self.conditional_precision_matrix = (
+            self.prior_linear_op.inverse()
+            + _inner_product(self.projected_design_matrix, self.projected_design_matrix)
+        )
+        self.conditional_inv_tril, _ = cho_factor(
+            self.conditional_precision_matrix, lower=True
+        )
+
     def sample_with_intermediates(self, key, sample_shape=()):
         assert is_prng_key(key)
         prior_key, data_key = jax.random.split(key)
@@ -467,49 +483,56 @@ class MarginalizedLinear(dist.Distribution):
     def sample(self, key, sample_shape=()):
         return self.sample_with_intermediates(key, sample_shape)[0]
 
-    def log_prob_and_conditional(self, value):
-        data_size, _ = jnp.shape(self.design_matrix)[-2:]
+    def _get_alpha(self, value):
+        data_size = jnp.shape(self.design_matrix)[-2]
         assert jnp.shape(value)[-1] == data_size
-        prior = to_linear_op(self.prior_distribution)
-        data = to_linear_op(self.data_distribution)
+        return self.data_linear_op.solve_tril((value - self.mean)[..., None], False)
 
-        def inner(a, b):
-            aT = jnp.swapaxes(a, -2, -1)
-            return aT @ b
-
-        # This inner matrix is used for both the matrix determinant and inverse
-        data_tril = data.solve_tril(self.design_matrix, False)
-        sigma = prior.inverse() + inner(data_tril, data_tril)
-        factor, lower = cho_factor(sigma, lower=True)
+    @validate_sample
+    def log_prob(self, value):
+        data_size = jnp.shape(self.design_matrix)[-2]
 
         # Use the matrix determinant lemma to compute the full determinant
-        hld = jnp.sum(jnp.log(jnp.diagonal(factor, axis1=-2, axis2=-1)), -1)
-        norm = hld + prior.half_log_det() + data.half_log_det()
+        hld = jnp.sum(
+            jnp.log(jnp.diagonal(self.conditional_inv_tril, axis1=-2, axis2=-1)), -1
+        )
+        norm = (
+            hld
+            + self.prior_linear_op.half_log_det()
+            + self.data_linear_op.half_log_det()
+        )
 
         # Use the Woodbury matrix identity to solve the linear system
-        resid = (value - self.mean)[..., None]
-        alpha = data.solve_tril(resid, False)
-        result = inner(alpha, alpha)
-        alpha = inner(data_tril, alpha)
-        result -= inner(alpha, cho_solve((factor, lower), alpha))
+        alpha = self._get_alpha(value)
+        result = _inner_product(alpha, alpha)
+        alpha = _inner_product(self.projected_design_matrix, alpha)
+        result -= _inner_product(
+            alpha, cho_solve((self.conditional_inv_tril, True), alpha)
+        )
         log_prob = (
             -0.5 * result[..., 0, 0] - norm - 0.5 * data_size * jnp.log(2 * jnp.pi)
         )
 
-        # Evaluate the conditional mean
-        a = prior.solve_tril(prior.solve_tril(prior.loc()[..., None], False), True)
-        a = cho_solve((factor, lower), (a + alpha)[..., 0])
-
-        return log_prob, dist.MultivariateNormal(loc=a, precision_matrix=sigma)
-
-    @validate_sample
-    def log_prob(self, value):
-        return self.log_prob_and_conditional(value)[0]
+        return log_prob
 
     def conditional(self, value=None):
         if value is None:
             return self.prior_distribution
-        return self.log_prob_and_conditional(value)[1]
+
+        # TODO(dfm): The following two lines are also used in `log_prob`.
+        # They're probably not the bottleneck, but it is interesting to think
+        # about how we could avoid the duplication, since we typically want both
+        # distributions for the same `value``.
+        alpha = self._get_alpha(value)
+        alpha = _inner_product(self.projected_design_matrix, alpha)
+        a = self.prior_linear_op.loc()[..., None]
+        a = self.prior_linear_op.solve_tril(a, False)
+        a = self.prior_linear_op.solve_tril(a, True)
+        a = cho_solve((self.conditional_inv_tril, True), (a + alpha)[..., 0])
+
+        return dist.MultivariateNormal(
+            loc=a, precision_matrix=self.conditional_precision_matrix
+        )
 
     def tree_flatten(self):
         prior_flat, prior_aux = self.prior_distribution.tree_flatten()
@@ -545,3 +568,8 @@ class MarginalizedLinear(dist.Distribution):
         return data.cov() + self.design_matrix @ prior.cov() @ jnp.swapaxes(
             self.design_matrix, -2, -1
         )
+
+
+def _inner_product(a, b):
+    aT = jnp.swapaxes(a, -2, -1)
+    return aT @ b
