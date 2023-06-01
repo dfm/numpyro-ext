@@ -114,6 +114,7 @@ def _jaxopt_wrapper():
                 success=False,
                 status=0,
                 iter_num=0,
+                hess_inv=None,
             ),
         )
 
