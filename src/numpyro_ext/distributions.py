@@ -27,6 +27,9 @@ from numpyro_ext.linear_op import to_linear_op
 class _QuadLDConstraint(constraints.Constraint):
     event_dim = 1
 
+    def tree_flatten(self):
+        return (), ((), dict())
+
     def __call__(self, u):
         assert jnp.shape(u) == (2,)
         a = u[0] + u[1] < 1.0
@@ -42,6 +45,9 @@ class _QuadLDConstraint(constraints.Constraint):
 class _UnitDiskConstraint(constraints.Constraint):
     event_dim = 1
 
+    def tree_flatten(self):
+        return (), ((), dict())
+
     def __call__(self, x):
         assert jnp.shape(x) == (2,)
         return x[0] ** 2 + x[1] ** 2 <= 1.0
@@ -56,6 +62,9 @@ class _AngleConstraint(constraints._Interval):
         self.regularized = regularized
         super().__init__(-jnp.pi, jnp.pi)
 
+    def tree_flatten(self):
+        return (self.regularized,), (("regularized",), dict())
+
 
 quad_ld = _QuadLDConstraint()
 unit_disk = _UnitDiskConstraint()
@@ -69,6 +78,9 @@ angle = _AngleConstraint()
 class QuadLDTransform(transforms.Transform):
     domain = constraints.independent(constraints.unit_interval, 1)
     codomain = quad_ld
+
+    def tree_flatten(self):
+        return (), ((), dict())
 
     def __eq__(self, other):
         return isinstance(other, QuadLDTransform)
@@ -87,6 +99,9 @@ class QuadLDTransform(transforms.Transform):
 class UnitDiskTransform(transforms.Transform):
     domain = constraints.independent(constraints.interval(-1.0, 1.0), 1)
     codomain = unit_disk
+
+    def tree_flatten(self):
+        return (), ((), dict())
 
     def __eq__(self, other):
         return isinstance(other, UnitDiskTransform)
@@ -122,6 +137,9 @@ class Arctan2Transform(transforms.Transform):
 
     def __init__(self, regularized=None):
         self.regularized = regularized
+
+    def tree_flatten(self):
+        return (self.regularized,), (("regularized",), dict())
 
     def __eq__(self, other):
         return isinstance(other, Arctan2Transform)
