@@ -16,3 +16,4 @@ from numpyro_ext import distributions as distributions
 from numpyro_ext import infer as infer
 from numpyro_ext import optim as optim
 from numpyro_ext.info import information as information
+from numpyro_ext.version import __version__ as __version__
