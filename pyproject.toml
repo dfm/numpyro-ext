@@ -7,7 +7,7 @@ name = "numpyro-ext"
 description = "A miscellaneous set of helper functions, custom distributions, and other utilities that I find useful when using NumPyro in my work"
 authors = [{ name = "Dan Foreman-Mackey", email = "foreman.mackey@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "Apache License" }
 classifiers = [
     "Operating System :: OS Independent",
@@ -32,7 +32,7 @@ ncx2 = ["tensorflow-probability"]
 write_to = "src/numpyro_ext/version.py"
 
 [tool.black]
-target-version = ["py38", "py39"]
+target-version = ["py39"]
 line-length = 88
 
 [tool.ruff]
