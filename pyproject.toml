@@ -16,7 +16,7 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
 ]
 dynamic = ["version"]
-dependencies = ["numpyro>=0.10.1"]
+dependencies = ["numpyro>=0.13.1"]
 
 [project.urls]
 "Homepage" = "https://github.com/dfm/numpyro-ext"
