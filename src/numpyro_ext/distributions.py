@@ -15,7 +15,8 @@ from jax import lax
 from jax.scipy.linalg import cho_factor, cho_solve
 from numpyro.distributions import MixtureGeneral as MixtureGeneral
 from numpyro.distributions import constraints, transforms
-from numpyro.distributions.util import is_prng_key, promote_shapes, validate_sample
+from numpyro.distributions.util import promote_shapes, validate_sample
+from numpyro.util import is_prng_key
 
 from numpyro_ext.linear_op import to_linear_op
 
