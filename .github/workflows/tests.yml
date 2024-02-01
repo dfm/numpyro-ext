@@ -46,14 +46,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Cache pip packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ matrix.nox-session }}-${{ hashFiles('**/noxfile.py') }}
           restore-keys: |
             ${{ runner.os }}-pip-${{ matrix.nox-session }}-
       - name: Cache nox session files
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .nox
           key: ${{ runner.os }}-nox-${{ matrix.nox-session }}-${{ hashFiles('**/noxfile.py') }}
@@ -61,7 +61,7 @@ jobs:
             ${{ runner.os }}-nox-${{ matrix.nox-session }}-
       - name: Cache pre-commit environments
         if: ${{ matrix.nox-session == 'lint' }}
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
