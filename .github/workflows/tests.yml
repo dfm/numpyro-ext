@@ -96,7 +96,7 @@ jobs:
   upload_pypi:
     environment:
       name: pypi
-      url: https://pypi.org/p/snakemake-staging
+      url: https://pypi.org/p/numpyro-ext
     permissions:
       id-token: write
     needs: [tests, build]
