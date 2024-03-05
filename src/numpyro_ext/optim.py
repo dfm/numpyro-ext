@@ -143,7 +143,7 @@ class JAXOptMinimize(_NumPyroOptim):
         super().__init__(_jaxopt_wrapper)
         self.solver_kwargs = {} if kwargs is None else kwargs
 
-    def eval_and_update(self, fn, in_state):
+    def eval_and_update(self, fn, in_state, forward_mode_differentiation=False):
         import scipy.optimize  # noqa
         from jaxopt import ScipyMinimize
 
@@ -154,6 +154,11 @@ class JAXOptMinimize(_NumPyroOptim):
                     "JAXOptMinimize does not support models with mutable states."
                 )
             return out
+
+        if forward_mode_differentiation:
+            raise ValueError(
+                "Forward mode differentiation is not implemented for JaxOptMinimze"
+            )
 
         solver = ScipyMinimize(fun=loss, **self.solver_kwargs)
         out_state = solver.run(self.get_params(in_state))
